@@ -223,36 +223,16 @@ export function AdminSidebar({
           })}
         </div>
 
-        {/* Bottom Role Switcher & Marketing Link */}
-        <div className="border-t border-ink/8 p-3 bg-ivory/20 space-y-2">
-          {/* Quick role toggle between School Admin and Super Admin */}
-          <button
-            type="button"
-            onClick={() => {
-              if (portal === "admin") {
-                switchRole("super_admin");
-                window.location.href = "/super-admin";
-              } else {
-                switchRole("school_admin");
-                window.location.href = "/admin";
-              }
-            }}
+        {/* Bottom Actions */}
+        <div className="border-t border-ink/8 p-3 bg-ivory/20">
+          <Link
+            href="/admin/settings"
             className="flex w-full items-center justify-between rounded-2xl border border-ink/10 bg-white px-3 py-2 text-xs font-semibold text-ink/75 hover:bg-ivory hover:text-ink transition"
           >
             <span className="flex items-center gap-2">
-              <ArrowLeftRight className="h-3.5 w-3.5 text-teal" />
-              <span>
-                Switch to {portal === "admin" ? "Super Admin" : "School Admin"}
-              </span>
+              <Settings className="h-3.5 w-3.5 text-teal" />
+              <span>School Settings</span>
             </span>
-          </button>
-
-          <Link
-            href="/"
-            className="flex w-full items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-ink/55 hover:text-teal transition"
-          >
-            <span>Back to Public Website</span>
-            <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
       </aside>
