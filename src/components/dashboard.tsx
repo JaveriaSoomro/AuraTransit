@@ -2,12 +2,23 @@ export function Dashboard() {
   return (
     <section id="product" className="px-3 pt-8 pb-20 sm:px-5 sm:pt-10 sm:pb-28">
       <div className="mx-auto max-w-[1280px]">
-        <p className="text-[11px] font-semibold tracking-[0.24em] text-teal">
-          PRODUCT EXPERIENCE
-        </p>
-        <h2 className="mt-4 max-w-[16ch] text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-          A calm operations view for every active journey.
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.24em] text-teal">
+              PRODUCT EXPERIENCE
+            </p>
+            <h2 className="mt-4 max-w-[16ch] text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+              A calm operations view for every active journey.
+            </h2>
+          </div>
+          <a
+            href="/admin"
+            className="inline-flex items-center gap-2 rounded-full bg-teal px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-teal/90 w-fit shrink-0"
+          >
+            <span>Launch Live Dashboard</span>
+            <span>→</span>
+          </a>
+        </div>
 
         <div className="mt-12 overflow-hidden rounded-[32px] border border-white/40 bg-[#102f34] shadow-[0_40px_80px_rgba(24,50,56,0.22)] sm:rounded-[40px]">
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">

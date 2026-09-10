@@ -6,6 +6,8 @@ import { Logo } from "./logo";
 const links = [
   { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "How It Works" },
+  { href: "/admin", label: "School Admin" },
+  { href: "/super-admin", label: "Super Admin" },
 ];
 
 export function Nav({ onDemo }: { onDemo: () => void }) {
@@ -39,16 +41,22 @@ export function Nav({ onDemo }: { onDemo: () => void }) {
         <div className="hidden items-center gap-2 sm:flex">
           <a
             href="/login"
-            className="rounded-full px-4 py-2 text-[13px] font-medium text-ink/70 hover:text-ink"
+            className="rounded-full px-3.5 py-2 text-[13px] font-medium text-ink/70 hover:text-ink"
           >
             Log In
+          </a>
+          <a
+            href="/admin"
+            className="rounded-full bg-teal px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-teal/90 shadow-xs"
+          >
+            Live Dashboard →
           </a>
           <button
             type="button"
             onClick={onDemo}
             className="rounded-full bg-sun px-4 py-2 text-[13px] font-semibold text-ink transition hover:brightness-95"
           >
-            Request a Demo
+            Request Demo
           </button>
         </div>
         <button

@@ -10,6 +10,9 @@ export function Footer() {
             <div>
               <p className="mb-3 font-semibold text-ink">Platform</p>
               <ul className="space-y-2 text-ink/60">
+                <li><a href="/admin" className="hover:text-teal font-medium">School Admin Portal</a></li>
+                <li><a href="/super-admin" className="hover:text-teal font-medium">Super Admin Portal</a></li>
+                <li><a href="/login" className="hover:text-teal">Demo Sign In</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#how-it-works">How It Works</a></li>
               </ul>

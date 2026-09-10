@@ -21,18 +21,25 @@ export function Hero({ onDemo }: { onDemo: () => void }) {
             connected transportation system.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/admin"
+              className="rounded-full bg-sun px-6 py-3.5 text-sm font-semibold text-ink transition hover:brightness-95 shadow-md flex items-center gap-2"
+            >
+              <span>Open Live Dashboard</span>
+              <span>→</span>
+            </a>
             <button
               type="button"
               onClick={onDemo}
-              className="rounded-full bg-sun px-6 py-3.5 text-sm font-semibold text-ink transition hover:brightness-95"
+              className="rounded-full border border-ivory/25 px-6 py-3.5 text-sm font-semibold text-ivory transition hover:bg-ivory/10"
             >
               Request a Demo
             </button>
             <a
-              href="#how-it-works"
-              className="rounded-full border border-ivory/25 px-6 py-3.5 text-sm font-semibold text-ivory transition hover:bg-ivory/10"
+              href="/super-admin"
+              className="rounded-full border border-ivory/15 bg-white/5 px-5 py-3.5 text-sm font-medium text-ivory/80 transition hover:bg-white/10"
             >
-              See How It Works
+              Super Admin Console
             </a>
           </div>
 
