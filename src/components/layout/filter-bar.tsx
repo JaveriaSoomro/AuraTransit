@@ -13,9 +13,10 @@ export interface FilterOption {
 }
 
 interface FilterBarProps {
-  searchValue: string;
-  onSearchChange: (value: string) => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
+  hideSearch?: boolean;
   filters?: FilterOption[];
   onResetFilters?: () => void;
   totalResults?: number;
@@ -24,9 +25,10 @@ interface FilterBarProps {
 }
 
 export function FilterBar({
-  searchValue,
+  searchValue = "",
   onSearchChange,
   searchPlaceholder = "Search...",
+  hideSearch = false,
   filters = [],
   onResetFilters,
   totalResults,
@@ -34,7 +36,7 @@ export function FilterBar({
   rightActions,
 }: FilterBarProps) {
   const hasActiveFilters =
-    searchValue.trim().length > 0 ||
+    (!hideSearch && searchValue.trim().length > 0) ||
     filters.some((f) => f.value && f.value !== "all" && f.value !== "");
 
   return (
@@ -47,7 +49,8 @@ export function FilterBar({
       {/* Search and Dropdowns */}
       <div className="flex flex-1 flex-wrap items-center gap-2.5">
         {/* Search Input */}
-        <div className="relative flex-1 min-w-[200px] max-w-md">
+        {!hideSearch && onSearchChange && (
+          <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink/40" />
           <input
             type="text"
@@ -66,6 +69,7 @@ export function FilterBar({
             </button>
           )}
         </div>
+        )}
 
         {/* Dynamic Filters */}
         {filters.map((filter) => (

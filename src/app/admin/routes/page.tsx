@@ -26,6 +26,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input, Select, Textarea } from "@/components/ui/form-field";
 import { RouteMapPreview } from "@/components/maps/route-map-preview";
+import { RouteStopJourneyBuilder } from "@/components/routes/route-stop-journey-builder";
 import { useToast } from "@/components/ui/toast";
 
 export default function RoutesPage() {
@@ -45,6 +46,7 @@ export default function RoutesPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editRoute, setEditRoute] = useState<Route | null>(null);
+  const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [viewRoute, setViewRoute] = useState<Route | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Route | null>(null);
 
@@ -94,6 +96,7 @@ export default function RoutesPage() {
   }, [routes, search, statusFilter]);
 
   const handleOpenCreate = () => {
+    setModalStep(1);
     setFormData({
       routeNumber: `Route ${Math.floor(10 + Math.random() * 89)}`,
       name: "Canyon Ridge Morning Express",
@@ -114,6 +117,7 @@ export default function RoutesPage() {
   };
 
   const handleOpenEdit = (r: Route) => {
+    setModalStep(1);
     setEditRoute(r);
     setFormData({
       routeNumber: r.routeNumber,
@@ -135,10 +139,19 @@ export default function RoutesPage() {
       showToast("Please enter route number and name.", "error");
       return;
     }
+    if (formData.stops.length === 0) {
+      showToast("Please add at least one stop to the route journey.", "error");
+      return;
+    }
 
     const assignedDriver = drivers.find((d) => d.id === formData.assignedDriverId);
     const assignedVehicle = vehicles.find((v) => v.id === formData.assignedVehicleId);
     const assignedAide = aides.find((a) => a.id === formData.assignedAideId);
+
+    const calculatedStudents = formData.stops.reduce(
+      (sum, s) => sum + (s.studentsCount || 0),
+      0,
+    );
 
     addRoute({
       ...formData,
@@ -146,13 +159,13 @@ export default function RoutesPage() {
       assignedDriverName: assignedDriver?.name,
       assignedVehicleNumber: assignedVehicle?.vehicleNumber,
       assignedAideName: assignedAide?.name,
-      studentsCount: 22,
+      studentsCount: calculatedStudents || 20,
       stopsCount: formData.stops.length,
       days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
     });
 
     setCreateModalOpen(false);
-    showToast(`Route ${formData.routeNumber} successfully created.`);
+    showToast(`Route ${formData.routeNumber} successfully created with ${formData.stops.length} stops.`);
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -163,11 +176,17 @@ export default function RoutesPage() {
     const assignedVehicle = vehicles.find((v) => v.id === formData.assignedVehicleId);
     const assignedAide = aides.find((a) => a.id === formData.assignedAideId);
 
+    const calculatedStudents = formData.stops.reduce(
+      (sum, s) => sum + (s.studentsCount || 0),
+      0,
+    );
+
     updateRoute(editRoute.id, {
       ...formData,
       assignedDriverName: assignedDriver?.name,
       assignedVehicleNumber: assignedVehicle?.vehicleNumber,
       assignedAideName: assignedAide?.name,
+      studentsCount: calculatedStudents || editRoute.studentsCount,
       stopsCount: formData.stops.length,
     });
 
@@ -316,12 +335,9 @@ export default function RoutesPage() {
 
       {/* Filter Bar */}
       <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search routes by name, number, driver or vehicle..."
+        hideSearch={true}
         totalResults={filteredData.length}
         onResetFilters={() => {
-          setSearch("");
           setStatusFilter("all");
         }}
         filters={[
@@ -349,146 +365,242 @@ export default function RoutesPage() {
         onRowClick={(r) => setViewRoute(r)}
       />
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit Modal with 2-Step Journey Builder */}
       <Modal
         open={createModalOpen || !!editRoute}
         onClose={() => {
           setCreateModalOpen(false);
           setEditRoute(null);
         }}
-        title={editRoute ? `Edit ${editRoute.routeNumber}` : "Create New Route"}
-        description="Configure route schedule, assign fleet vehicles, and designate certified personnel."
+        title={editRoute ? `Edit ${editRoute.routeNumber}` : "Create Route Journey"}
+        description={
+          modalStep === 1
+            ? "Step 1: Configure route identity, vehicle assignment, schedule window & driver team."
+            : `Step 2: Select stops, sequence waypoints & configure scheduled arrival timings (${formData.stops.length} stops).`
+        }
+        maxWidth="xl"
         footer={
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setCreateModalOpen(false);
-                setEditRoute(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={editRoute ? handleEditSubmit : handleCreateSubmit}
-            >
-              {editRoute ? "Save Changes" : "Create Route"}
-            </Button>
-          </>
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs text-ink/60">
+              <span className="font-semibold">
+                Step {modalStep} of 2:
+              </span>
+              <span>
+                {modalStep === 1 ? "Route Parameters" : "Stop Selection & Journey"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {modalStep === 2 ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setModalStep(1)}
+                >
+                  ← Back to Details
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setCreateModalOpen(false);
+                    setEditRoute(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+
+              {modalStep === 1 ? (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    if (!formData.routeNumber || !formData.name) {
+                      showToast("Please enter a route number and route name.", "error");
+                      return;
+                    }
+                    setModalStep(2);
+                  }}
+                >
+                  Next: Select Stops ({formData.stops.length}) →
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={editRoute ? handleEditSubmit : handleCreateSubmit}
+                >
+                  {editRoute ? "Save Route" : "Finish & Create Route"}
+                </Button>
+              )}
+            </div>
+          </div>
         }
       >
-        <form className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Route Number"
-              placeholder="e.g. Route 08"
-              value={formData.routeNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, routeNumber: e.target.value })
+        {/* Step Tabs Navigation */}
+        <div className="mb-4 flex items-center gap-2 border-b border-ink/8 pb-3">
+          <button
+            type="button"
+            onClick={() => setModalStep(1)}
+            className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              modalStep === 1
+                ? "bg-teal text-white shadow-2xs"
+                : "bg-ivory text-ink/70 hover:text-ink"
+            }`}
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px]">
+              1
+            </span>
+            <span>Route Details & Assignment</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!formData.routeNumber || !formData.name) {
+                showToast("Please enter route number and name first.", "error");
+                return;
               }
-              required
-            />
-            <Input
-              label="Route Name"
-              placeholder="e.g. West Valley Corridor"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              required
-            />
-          </div>
+              setModalStep(2);
+            }}
+            className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              modalStep === 2
+                ? "bg-teal text-white shadow-2xs"
+                : "bg-ivory text-ink/70 hover:text-ink"
+            }`}
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px]">
+              2
+            </span>
+            <span>Journey Stops & Timings ({formData.stops.length})</span>
+          </button>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Select
-              label="Assigned Vehicle"
-              value={formData.assignedVehicleId}
-              onChange={(e) =>
-                setFormData({ ...formData, assignedVehicleId: e.target.value })
-              }
-              options={[
-                { label: "— Unassigned —", value: "" },
-                ...vehicles.map((v) => ({
-                  label: `${v.vehicleNumber} (${v.type})`,
-                  value: v.id,
-                })),
-              ]}
-            />
-            <Select
-              label="Assigned Driver"
-              value={formData.assignedDriverId}
-              onChange={(e) =>
-                setFormData({ ...formData, assignedDriverId: e.target.value })
-              }
-              options={[
-                { label: "— Unassigned —", value: "" },
-                ...drivers.map((d) => ({
-                  label: `${d.name} (${d.status})`,
-                  value: d.id,
-                })),
-              ]}
-            />
-            <Select
-              label="Assigned Aide"
-              value={formData.assignedAideId}
-              onChange={(e) =>
-                setFormData({ ...formData, assignedAideId: e.target.value })
-              }
-              options={[
-                { label: "— None —", value: "" },
-                ...aides.map((a) => ({
-                  label: a.name,
-                  value: a.id,
-                })),
-              ]}
-            />
-          </div>
+        {modalStep === 1 ? (
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setModalStep(2); }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Route Number"
+                placeholder="e.g. Route 08"
+                value={formData.routeNumber}
+                onChange={(e) =>
+                  setFormData({ ...formData, routeNumber: e.target.value })
+                }
+                required
+              />
+              <Input
+                label="Route Name"
+                placeholder="e.g. West Valley Corridor"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input
-              label="Start Time"
-              value={formData.startTime}
-              onChange={(e) =>
-                setFormData({ ...formData, startTime: e.target.value })
-              }
-            />
-            <Input
-              label="Expected Arrival"
-              value={formData.expectedArrival}
-              onChange={(e) =>
-                setFormData({ ...formData, expectedArrival: e.target.value })
-              }
-            />
-            <Select
-              label="Status"
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as Route["status"],
-                })
-              }
-              options={[
-                { label: "Scheduled", value: "scheduled" },
-                { label: "In Progress", value: "in_progress" },
-                { label: "Delayed", value: "delayed" },
-                { label: "Completed", value: "completed" },
-              ]}
-            />
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Select
+                label="Assigned Vehicle"
+                value={formData.assignedVehicleId}
+                onChange={(e) =>
+                  setFormData({ ...formData, assignedVehicleId: e.target.value })
+                }
+                options={[
+                  { label: "— Unassigned —", value: "" },
+                  ...vehicles.map((v) => ({
+                    label: `${v.vehicleNumber} (${v.type})`,
+                    value: v.id,
+                  })),
+                ]}
+              />
+              <Select
+                label="Assigned Driver"
+                value={formData.assignedDriverId}
+                onChange={(e) =>
+                  setFormData({ ...formData, assignedDriverId: e.target.value })
+                }
+                options={[
+                  { label: "— Unassigned —", value: "" },
+                  ...drivers.map((d) => ({
+                    label: `${d.name} (${d.status})`,
+                    value: d.id,
+                  })),
+                ]}
+              />
+              <Select
+                label="Assigned Aide"
+                value={formData.assignedAideId}
+                onChange={(e) =>
+                  setFormData({ ...formData, assignedAideId: e.target.value })
+                }
+                options={[
+                  { label: "— None —", value: "" },
+                  ...aides.map((a) => ({
+                    label: a.name,
+                    value: a.id,
+                  })),
+                ]}
+              />
+            </div>
 
-          <Textarea
-            label="Route Description / Instructions"
-            placeholder="Operational notes for driver and aide regarding campus gates and construction bypasses..."
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Input
+                label="Start Time"
+                value={formData.startTime}
+                onChange={(e) =>
+                  setFormData({ ...formData, startTime: e.target.value })
+                }
+              />
+              <Input
+                label="Expected Arrival"
+                value={formData.expectedArrival}
+                onChange={(e) =>
+                  setFormData({ ...formData, expectedArrival: e.target.value })
+                }
+              />
+              <Select
+                label="Status"
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as Route["status"],
+                  })
+                }
+                options={[
+                  { label: "Scheduled", value: "scheduled" },
+                  { label: "In Progress", value: "in_progress" },
+                  { label: "Delayed", value: "delayed" },
+                  { label: "Completed", value: "completed" },
+                ]}
+              />
+            </div>
+
+            <Textarea
+              label="Route Description / Instructions"
+              placeholder="Operational notes for driver and aide regarding campus gates and construction bypasses..."
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+            />
+          </form>
+        ) : (
+          <RouteStopJourneyBuilder
+            stops={formData.stops}
+            onChange={(newStops) => {
+              setFormData((prev) => ({
+                ...prev,
+                stops: newStops,
+                startTime: newStops[0]?.scheduledTime || prev.startTime,
+                expectedArrival:
+                  newStops[newStops.length - 1]?.scheduledTime || prev.expectedArrival,
+              }));
+            }}
           />
-        </form>
+        )}
       </Modal>
 
       {/* View Route Drawer */}
